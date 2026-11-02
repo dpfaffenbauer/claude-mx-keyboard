@@ -1,0 +1,6 @@
+.DS_Store
+dist/
+*.lplug4
+ClaudeStatusPlugin/bin/
+ClaudeStatusPlugin/obj/
+ClaudeStatusPlugin/src/obj/
