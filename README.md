@@ -116,4 +116,4 @@ Code map: `src/Resources/claude-mx-keypad.sh` (hook), `src/Setup/HookInstaller.c
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) – end user terms for the Logitech Marketplace: [EULA](EULA.md)
