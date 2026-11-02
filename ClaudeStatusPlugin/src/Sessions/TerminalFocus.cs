@@ -118,6 +118,13 @@ namespace Loupedeck.ClaudeStatusPlugin
                     return;
                 }
 
+                // Claude desktop app: open the session itself via its deep link
+                if (bundle == ClaudeDesktop.BundleId && ClaudeDesktop.TryGetSessionUrl(session.SessionId, out var url))
+                {
+                    Run("/usr/bin/open", url);
+                    return;
+                }
+
                 var arguments = new List<String> { bundle };
                 arguments.AddRange(FolderCandidates(session.Cwd));
                 var result = RunOsaScript(RaiseWindowScript, arguments.ToArray());

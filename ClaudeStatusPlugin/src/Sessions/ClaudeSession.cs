@@ -56,5 +56,13 @@ namespace Loupedeck.ClaudeStatusPlugin
         public String DisplayName => String.IsNullOrEmpty(this.Title) ? this.Project : this.Title;
 
         public String AckKey => $"{this.SessionId}:{this.Since}";
+
+        // "since" as the hook wrote it (Since may be corrected from the transcript)
+        [System.Text.Json.Serialization.JsonIgnore]
+        public Int64 HookSince { get; set; }
+
+        // a dismissed session comes back as soon as the hook reports a new state
+        [System.Text.Json.Serialization.JsonIgnore]
+        public String DismissKey => $"{this.SessionId}:{this.HookSince}";
     }
 }

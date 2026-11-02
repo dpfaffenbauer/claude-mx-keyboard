@@ -4,11 +4,16 @@ namespace Loupedeck.ClaudeStatusPlugin
     using System.Collections.Generic;
 
     // "Claude Session 1..9": one key per running Claude Code session.
-    // Shows the session name + state, pressing it focuses the session's terminal tab
-    // (and clears a "done"/"error" marker).
+    // Shows the session name + state. A press focuses the session's terminal tab (and clears
+    // a "done"/"error" marker); a double press takes a finished or idle session off the keypad
+    // until it does something new.
     public class SessionSlotCommand : PluginDynamicCommand
     {
+        private const Int64 DoublePressMs = 450;
+
         private readonly Dictionary<String, String> _signatures = new();
+        private String _lastPressSession;
+        private Int64 _lastPressAt;
 
         public SessionSlotCommand()
             : base()
@@ -26,6 +31,22 @@ namespace Loupedeck.ClaudeStatusPlugin
             var view = SessionStore.Instance.GetSlot(IndexOf(actionParameter));
             if (view == null)
             {
+                return;
+            }
+
+            var now = Environment.TickCount64;
+            var isDoublePress = view.Session.SessionId == this._lastPressSession && now - this._lastPressAt <= DoublePressMs;
+            this._lastPressSession = view.Session.SessionId;
+            this._lastPressAt = now;
+            if (isDoublePress)
+            {
+                // never hide a session that is working or needs you
+                if (view.State is SessionDisplayState.Idle or SessionDisplayState.Done or SessionDisplayState.Error)
+                {
+                    SessionStore.Instance.Dismiss(view.Session);
+                    this._lastPressSession = null;
+                }
+
                 return;
             }
 

@@ -26,6 +26,10 @@ Pressing a key brings the session's terminal to the front and clears a *done*/*e
 **Next waiting session** shows how many sessions wait for you and jumps to the one waiting longest.
 
 Sessions keep their key while they run; a session whose `claude` process is gone is cleaned up automatically.
+
+**Taking a session off the keypad:** exit it in the terminal, or archive it in the Claude desktop app.
+**Double-press** a key to hide a finished or idle session right away – it comes back as soon as it does
+something new (next prompt, approval, …). Working sessions and sessions waiting for you can't be hidden.
 Texts are English, or German when Logi Options+ runs in German.
 
 ### Jumping to the session
@@ -34,6 +38,7 @@ Texts are English, or German when Logi Options+ runs in German.
 |---|---|
 | iTerm2 | selects the exact window, tab and split pane |
 | Terminal.app | selects the exact window and tab |
+| Claude desktop app (Code tab) | opens the session in the app (`claude://code/continue?session=…`) |
 | PhpStorm / other JetBrains IDEs, VS Code, … | raises the project window whose title names the session's folder |
 | Ghostty, WezTerm, Warp | activates the app |
 

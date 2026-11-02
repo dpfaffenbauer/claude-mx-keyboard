@@ -25,6 +25,7 @@ namespace Loupedeck.ClaudeStatusPlugin
         private readonly Object _refreshGate = new();
         private readonly String[] _slots = new String[SlotCount];
         private readonly HashSet<String> _acknowledged = new();
+        private readonly HashSet<String> _dismissed = new();
         private readonly Dictionary<String, TranscriptWatcher> _titles = new();
         private readonly Dictionary<String, DateTime> _transcriptRetry = new();
         private Dictionary<String, ClaudeSession> _sessions = new();
@@ -109,6 +110,19 @@ namespace Loupedeck.ClaudeStatusPlugin
             this.RequestRefresh();
         }
 
+        // Takes a session off the keypad until it does something new (next prompt, approval, ...).
+        // For sessions that cannot simply be closed, e.g. in the Claude desktop app.
+        public void Dismiss(ClaudeSession session)
+        {
+            lock (this._gate)
+            {
+                this._dismissed.Add(session.DismissKey);
+            }
+
+            PluginLog.Info($"Dismissed {session.DisplayName} from the keypad");
+            this.RequestRefresh();
+        }
+
         private SessionView ToView(ClaudeSession session)
         {
             var state = SessionView.Map(session.State);
@@ -153,11 +167,26 @@ namespace Loupedeck.ClaudeStatusPlugin
 
                 this.UpdateTitles(loaded);
 
+                // archiving a desktop-app session is how it gets closed
+                var running = loaded.Keys.ToHashSet();
+                foreach (var archived in loaded.Values
+                    .Where(s => s.App == ClaudeDesktop.BundleId && ClaudeDesktop.IsArchived(s.SessionId))
+                    .ToList())
+                {
+                    loaded.Remove(archived.SessionId);
+                }
+
                 lock (this._gate)
                 {
+                    foreach (var dismissed in loaded.Values.Where(s => this._dismissed.Contains(s.DismissKey)).ToList())
+                    {
+                        loaded.Remove(dismissed.SessionId);
+                    }
+
                     this._sessions = loaded;
                     this.AssignSlots();
                     this._acknowledged.RemoveWhere(key => !loaded.ContainsKey(key.Split(':')[0]));
+                    this._dismissed.RemoveWhere(key => !running.Contains(key.Split(':')[0]));
                 }
 
                 this.Updated?.Invoke();
@@ -298,6 +327,7 @@ namespace Loupedeck.ClaudeStatusPlugin
                     var session = JsonSerializer.Deserialize<ClaudeSession>(stream, JsonOptions);
                     if (!String.IsNullOrEmpty(session?.SessionId))
                     {
+                        session.HookSince = session.Since;
                         result[session.SessionId] = session;
                     }
                 }
